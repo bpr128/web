@@ -120,8 +120,8 @@ button,input,select{font:inherit}
         <label class="auth-label">Password</label>
         <input class="auth-input" id="employeePassword" type="password" autocomplete="current-password" placeholder="Enter password">
         <button class="auth-submit" id="employeeLoginBtn">Sign In</button>
-        <div class="auth-error" id="employeeError"></div>
-        <div class="auth-note">Your administrator creates employee accounts. Use the User ID and password provided by your administrator.</div>
+        <div class="auth-error" id="employeeError"></div><div id="loginHelp" style="margin-top:10px;font-size:11px;color:#64748b">If an account was just created, use the exact password set by the admin. Admin can use <b>Reset Password</b> if needed.</div>
+        <div class="auth-note">Test employee: <b>dhruv123</b> / <b>Dhruv@123</b>. Your administrator can create or reset other accounts.</div>
       </div>
 
       <div id="adminLogin" style="display:none">
@@ -700,13 +700,27 @@ window.addEventListener('hashchange',render);window.addEventListener('resize',()
   const SESSION_KEY='caliche_auth_v2';
 
   function users(){
+    let u=[];
     try{
-      const u=JSON.parse(localStorage.getItem(USERS_KEY)||'null');
-      if(Array.isArray(u) && u.length) return u;
-    }catch(e){}
-    const initial=[{name:'Employee',userId:'employee01',password:'Employee@123',department:'Operations'}];
-    localStorage.setItem(USERS_KEY,JSON.stringify(initial));
-    return initial;
+      const saved=JSON.parse(localStorage.getItem(USERS_KEY)||'null');
+      if(Array.isArray(saved)) u=saved;
+    }catch(e){ u=[]; }
+
+    // Fixed test account supplied by the site owner.
+    // Upsert it so an old localStorage copy can never break Dhruv's login.
+    const dhruv={name:'Dhruv',userId:'dhruv123',password:'Dhruv@123',department:'Simulation engineer'};
+    const di=u.findIndex(x=>String(x.userId||'').toLowerCase()==='dhruv123');
+    if(di>=0){
+      u[di]={...u[di],name:'Dhruv',userId:'dhruv123',password:'Dhruv@123',department:'Simulation engineer'};
+    }else{
+      u.push(dhruv);
+    }
+
+    if(!u.some(x=>String(x.userId||'').toLowerCase()==='employee01')){
+      u.unshift({name:'Employee',userId:'employee01',password:'Employee@123',department:'Operations'});
+    }
+    localStorage.setItem(USERS_KEY,JSON.stringify(u));
+    return u;
   }
   function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u));}
   function setSession(obj){sessionStorage.setItem(SESSION_KEY,JSON.stringify(obj));}
@@ -757,7 +771,7 @@ window.addEventListener('hashchange',render);window.addEventListener('resize',()
     clearError('employeeError');
     const id=document.getElementById('employeeUserId').value.trim();
     const pw=document.getElementById('employeePassword').value;
-    const u=users().find(x=>x.userId===id && x.password===pw);
+    const u=users().find(x=>String(x.userId).trim().toLowerCase()===id.toLowerCase() && String(x.password)===pw);
     if(!u){showError('employeeError','Invalid User ID or password. Please contact your administrator.');return;}
     setSession({role:'employee',userId:u.userId,name:u.name,department:u.department});
     showApp();
@@ -782,8 +796,22 @@ window.addEventListener('hashchange',render);window.addEventListener('resize',()
         <div><b>${escapeHtml(u.name)}</b><div style="color:#94a3b8">${escapeHtml(u.department||'—')}</div></div>
         <div><b>${escapeHtml(u.userId)}</b></div>
         <div>••••••••</div>
-        <button class="admin-btn admin-danger" data-del="${i}">Delete</button>
+        <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+          <button class="admin-btn" style="background:#e0f2fe;color:#0369a1" data-reset="${i}">Reset Password</button>
+          <button class="admin-btn admin-danger" data-del="${i}">Delete</button>
+        </div>
       </div>`).join('');
+
+    box.querySelectorAll('[data-reset]').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.reset), arr=users(), u=arr[i];
+      const np=prompt('Set a new password for '+u.name+' ('+u.userId+'):');
+      if(np===null)return;
+      if(np.length<4){alert('Password must be at least 4 characters.');return;}
+      arr[i].password=np;saveUsers(arr);renderUsers();
+      const msg=document.getElementById('adminMsg');
+      if(msg){msg.style.color='#15803d';msg.textContent='✓ Password reset for '+u.userId+'. The employee can log in now.';}
+    }));
+
     box.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
       const i=Number(b.dataset.del), arr=users();
       if(confirm('Delete this employee account?')){arr.splice(i,1);saveUsers(arr);renderUsers();}
@@ -800,7 +828,7 @@ window.addEventListener('hashchange',render);window.addEventListener('resize',()
     if(!name||!id||!pw){msg.style.color='#b91c1c';msg.textContent='Name, User ID and password are required.';return;}
     if(id===ADMIN_ID){msg.style.color='#b91c1c';msg.textContent='That User ID is reserved for the administrator.';return;}
     const arr=users();
-    if(arr.some(x=>x.userId===id)){msg.style.color='#b91c1c';msg.textContent='User ID already exists.';return;}
+    if(arr.some(x=>String(x.userId).toLowerCase()===id.toLowerCase())){msg.style.color='#b91c1c';msg.textContent='User ID already exists.';return;}
     arr.push({name,userId:id,password:pw,department:dept});
     saveUsers(arr);renderUsers();
     ['newName','newUserId','newPassword','newDepartment'].forEach(x=>document.getElementById(x).value='');
