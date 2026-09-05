@@ -59,8 +59,114 @@ button,input,select{font:inherit}
 @media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.theme{display:none}}
 @media(max-width:720px){.sidebar{position:fixed;z-index:20;height:100%;transform:translateX(-100%)}.sidebar.mobile-open{transform:translateX(0)}.mobile-overlay.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:10}.content{padding:14px}.hero{flex-direction:column}.grid{grid-template-columns:1fr}.quick-grid{grid-template-columns:1fr}.topbar{padding:0 12px}}
 </style>
+
+<style id="professionalAuthCSS">
+#authGate{position:fixed;inset:0;z-index:50000;background:linear-gradient(135deg,#eef4ff,#f8fafc 48%,#f3efff);display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-shell{width:min(980px,96vw);min-height:570px;background:#fff;border:1px solid #e2e8f0;border-radius:22px;box-shadow:0 25px 80px rgba(15,23,42,.16);display:grid;grid-template-columns:1.05fr .95fr;overflow:hidden}
+.auth-brand{background:#111827;color:#fff;padding:48px;display:flex;flex-direction:column;justify-content:center}
+.auth-logo{width:58px;height:58px;border-radius:16px;background:#fff;color:#f59e0b;display:grid;place-items:center;font:700 32px Georgia;margin-bottom:24px}
+.auth-brand h1{font-size:32px;margin:0 0 10px}.auth-brand p{color:#cbd5e1;line-height:1.6;font-size:14px}
+.auth-features{margin-top:24px;display:grid;gap:12px;font-size:13px;color:#e2e8f0}
+.auth-form{padding:42px;display:flex;flex-direction:column;justify-content:center}
+.auth-tabs{display:flex;gap:6px;background:#f1f5f9;padding:5px;border-radius:10px;margin-bottom:26px}
+.auth-tab{flex:1;border:0;padding:10px;border-radius:7px;background:transparent;color:#64748b;font-weight:700;cursor:pointer}
+.auth-tab.active{background:#fff;color:#1d4ed8;box-shadow:0 1px 5px #0001}
+.auth-form h2{margin:0;font-size:24px;color:#0f172a}.auth-sub{font-size:12px;color:#64748b;margin:6px 0 24px}
+.auth-label{display:block;font-size:11px;font-weight:700;color:#334155;margin:13px 0 6px}
+.auth-input{width:100%;padding:12px 13px;border:1px solid #cbd5e1;border-radius:9px;outline:none;background:#fff}
+.auth-input:focus{border-color:#2563eb;box-shadow:0 0 0 3px #2563eb18}
+.auth-submit{width:100%;margin-top:18px;padding:12px;border:0;border-radius:9px;background:#2563eb;color:#fff;font-weight:800;cursor:pointer}
+.auth-error{display:none;margin-top:12px;padding:10px;border-radius:8px;background:#fef2f2;color:#b91c1c;font-size:12px}
+.auth-note{font-size:11px;color:#94a3b8;margin-top:14px;line-height:1.5}
+#adminPanel{position:fixed;inset:0;z-index:49000;background:#f8fafc;display:none;overflow:auto}
+.admin-wrap{max-width:1100px;margin:0 auto;padding:28px}
+.admin-head{background:#111827;color:#fff;border-radius:16px;padding:22px;display:flex;justify-content:space-between;align-items:center}
+.admin-head h2{margin:0}.admin-head span{font-size:12px;color:#cbd5e1}
+.admin-grid{display:grid;grid-template-columns:360px 1fr;gap:16px;margin-top:16px}
+.admin-card{background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:18px}
+.admin-card h3{margin:0 0 14px;font-size:15px}
+.admin-btn{border:0;border-radius:8px;padding:10px 13px;font-weight:700;cursor:pointer}
+.admin-primary{background:#2563eb;color:#fff}.admin-danger{background:#fee2e2;color:#b91c1c}
+.user-row{display:grid;grid-template-columns:1.1fr 1fr .8fr auto;gap:10px;align-items:center;padding:11px 0;border-bottom:1px solid #f1f5f9;font-size:12px}
+@media(max-width:760px){.auth-shell{grid-template-columns:1fr}.auth-brand{display:none}.auth-form{padding:28px}.admin-grid{grid-template-columns:1fr}.user-row{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
+
+<div id="authGate">
+  <div class="auth-shell">
+    <section class="auth-brand">
+      <div class="auth-logo">C</div>
+      <h1>Caliche</h1>
+      <p>Integrated Internal Dashboard V2.0</p>
+      <div class="auth-features">
+        <div>✓ Employee secure login</div>
+        <div>✓ Role-based admin access</div>
+        <div>✓ Attendance with photo & location</div>
+        <div>✓ Local user management for this standalone build</div>
+      </div>
+    </section>
+    <section class="auth-form">
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="employeeTab">Employee Login</button>
+        <button class="auth-tab" id="adminTab">Admin Login</button>
+      </div>
+
+      <div id="employeeLogin">
+        <h2>Welcome back</h2>
+        <div class="auth-sub">Sign in with your employee User ID and password.</div>
+        <label class="auth-label">User ID</label>
+        <input class="auth-input" id="employeeUserId" autocomplete="username" placeholder="Enter User ID">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" id="employeePassword" type="password" autocomplete="current-password" placeholder="Enter password">
+        <button class="auth-submit" id="employeeLoginBtn">Sign In</button>
+        <div class="auth-error" id="employeeError"></div>
+        <div class="auth-note">Your administrator creates employee accounts. Use the User ID and password provided by your administrator.</div>
+      </div>
+
+      <div id="adminLogin" style="display:none">
+        <h2>Administrator Access</h2>
+        <div class="auth-sub">Manage employee User IDs and passwords.</div>
+        <label class="auth-label">Admin User ID</label>
+        <input class="auth-input" id="adminUserId" autocomplete="username" placeholder="Admin User ID">
+        <label class="auth-label">Admin Password</label>
+        <input class="auth-input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Admin password">
+        <button class="auth-submit" id="adminLoginBtn">Open Admin Console</button>
+        <div class="auth-error" id="adminError"></div>
+        <div class="auth-note">Standalone build: administrator credentials are stored locally in this browser. This is not a production server-side authentication system.</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div id="adminPanel">
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <div><h2>Caliche Admin Console</h2><span>User & access management</span></div>
+      <button class="admin-btn" id="adminLogout" style="background:#fff;color:#111827">Logout</button>
+    </div>
+    <div class="admin-grid">
+      <div class="admin-card">
+        <h3>Create Employee Account</h3>
+        <label class="auth-label">Employee Name</label>
+        <input class="auth-input" id="newName" placeholder="e.g. Rahul Kumar">
+        <label class="auth-label">User ID</label>
+        <input class="auth-input" id="newUserId" placeholder="e.g. rahul01">
+        <label class="auth-label">Password</label>
+        <input class="auth-input" id="newPassword" type="password" placeholder="Create password">
+        <label class="auth-label">Department</label>
+        <input class="auth-input" id="newDepartment" placeholder="e.g. Operations">
+        <button class="admin-btn admin-primary" id="createUser" style="width:100%;margin-top:16px">＋ Create User</button>
+        <div id="adminMsg" style="font-size:12px;margin-top:10px"></div>
+      </div>
+      <div class="admin-card">
+        <h3>Employee Accounts</h3>
+        <div id="userList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="mobile-overlay" id="overlay" onclick="closeMobile()"></div>
 <div class="app">
   <aside class="sidebar" id="sidebar">
@@ -582,6 +688,137 @@ window.addEventListener('hashchange',render);window.addEventListener('resize',()
   modal?.addEventListener('click',e=>{
     if(e.target===modal){stopClockCamera();modal.style.display='none';}
   });
+})();
+</script>
+
+
+<script id="professionalAuthJS">
+(function(){
+  const ADMIN_ID='admin';
+  const ADMIN_PASS='Admin@123';
+  const USERS_KEY='caliche_employee_users_v2';
+  const SESSION_KEY='caliche_auth_v2';
+
+  function users(){
+    try{
+      const u=JSON.parse(localStorage.getItem(USERS_KEY)||'null');
+      if(Array.isArray(u) && u.length) return u;
+    }catch(e){}
+    const initial=[{name:'Employee',userId:'employee01',password:'Employee@123',department:'Operations'}];
+    localStorage.setItem(USERS_KEY,JSON.stringify(initial));
+    return initial;
+  }
+  function saveUsers(u){localStorage.setItem(USERS_KEY,JSON.stringify(u));}
+  function setSession(obj){sessionStorage.setItem(SESSION_KEY,JSON.stringify(obj));}
+  function getSession(){try{return JSON.parse(sessionStorage.getItem(SESSION_KEY)||'null')}catch(e){return null}}
+  function showError(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.style.display='block'}}
+  function clearError(id){const el=document.getElementById(id);if(el)el.style.display='none'}
+
+  function showApp(){
+    document.getElementById('authGate').style.display='none';
+    document.getElementById('adminPanel').style.display='none';
+    document.querySelector('.app').style.display='flex';
+    const s=getSession();
+    if(s && s.role==='employee'){
+      const name=s.name||'Employee';
+      document.querySelectorAll('.uinfo b').forEach(x=>x.textContent=name);
+      const av=(name.split(/\s+/).map(x=>x[0]).join('').slice(0,2)||'EM').toUpperCase();
+      document.querySelectorAll('.user-mini .avatar').forEach(x=>x.textContent=av);
+    }
+  }
+  function showLogin(){
+    document.getElementById('authGate').style.display='flex';
+    document.getElementById('adminPanel').style.display='none';
+    document.querySelector('.app').style.display='none';
+  }
+  function showAdmin(){
+    document.getElementById('authGate').style.display='none';
+    document.querySelector('.app').style.display='none';
+    document.getElementById('adminPanel').style.display='block';
+    renderUsers();
+  }
+
+  document.getElementById('employeeTab')?.addEventListener('click',()=>{
+    document.getElementById('employeeTab').classList.add('active');
+    document.getElementById('adminTab').classList.remove('active');
+    document.getElementById('employeeLogin').style.display='block';
+    document.getElementById('adminLogin').style.display='none';
+    clearError('adminError');
+  });
+  document.getElementById('adminTab')?.addEventListener('click',()=>{
+    document.getElementById('adminTab').classList.add('active');
+    document.getElementById('employeeTab').classList.remove('active');
+    document.getElementById('adminLogin').style.display='block';
+    document.getElementById('employeeLogin').style.display='none';
+    clearError('employeeError');
+  });
+
+  document.getElementById('employeeLoginBtn')?.addEventListener('click',()=>{
+    clearError('employeeError');
+    const id=document.getElementById('employeeUserId').value.trim();
+    const pw=document.getElementById('employeePassword').value;
+    const u=users().find(x=>x.userId===id && x.password===pw);
+    if(!u){showError('employeeError','Invalid User ID or password. Please contact your administrator.');return;}
+    setSession({role:'employee',userId:u.userId,name:u.name,department:u.department});
+    showApp();
+    if(typeof toast==='function') toast('✓ Welcome, '+u.name);
+  });
+
+  document.getElementById('adminLoginBtn')?.addEventListener('click',()=>{
+    clearError('adminError');
+    const id=document.getElementById('adminUserId').value.trim();
+    const pw=document.getElementById('adminPassword').value;
+    if(id!==ADMIN_ID || pw!==ADMIN_PASS){showError('adminError','Invalid administrator credentials.');return;}
+    setSession({role:'admin',userId:ADMIN_ID});
+    showAdmin();
+  });
+
+  function renderUsers(){
+    const box=document.getElementById('userList'); if(!box)return;
+    const list=users();
+    if(!list.length){box.innerHTML='<div style="color:#94a3b8;font-size:12px">No employee accounts.</div>';return;}
+    box.innerHTML=list.map((u,i)=>`
+      <div class="user-row">
+        <div><b>${escapeHtml(u.name)}</b><div style="color:#94a3b8">${escapeHtml(u.department||'—')}</div></div>
+        <div><b>${escapeHtml(u.userId)}</b></div>
+        <div>••••••••</div>
+        <button class="admin-btn admin-danger" data-del="${i}">Delete</button>
+      </div>`).join('');
+    box.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+      const i=Number(b.dataset.del), arr=users();
+      if(confirm('Delete this employee account?')){arr.splice(i,1);saveUsers(arr);renderUsers();}
+    }));
+  }
+  function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+  document.getElementById('createUser')?.addEventListener('click',()=>{
+    const name=document.getElementById('newName').value.trim();
+    const id=document.getElementById('newUserId').value.trim();
+    const pw=document.getElementById('newPassword').value;
+    const dept=document.getElementById('newDepartment').value.trim()||'Operations';
+    const msg=document.getElementById('adminMsg');
+    if(!name||!id||!pw){msg.style.color='#b91c1c';msg.textContent='Name, User ID and password are required.';return;}
+    if(id===ADMIN_ID){msg.style.color='#b91c1c';msg.textContent='That User ID is reserved for the administrator.';return;}
+    const arr=users();
+    if(arr.some(x=>x.userId===id)){msg.style.color='#b91c1c';msg.textContent='User ID already exists.';return;}
+    arr.push({name,userId:id,password:pw,department:dept});
+    saveUsers(arr);renderUsers();
+    ['newName','newUserId','newPassword','newDepartment'].forEach(x=>document.getElementById(x).value='');
+    msg.style.color='#15803d';msg.textContent='✓ Employee account created successfully.';
+  });
+
+  document.getElementById('adminLogout')?.addEventListener('click',()=>{
+    sessionStorage.removeItem(SESSION_KEY);showLogin();
+  });
+
+  // Employee logout helper available to the dashboard profile button.
+  window.calicheLogout=function(){sessionStorage.removeItem(SESSION_KEY);location.reload();};
+
+  // Require login on every page load.
+  const s=getSession();
+  if(s?.role==='employee') showApp();
+  else if(s?.role==='admin') showAdmin();
+  else showLogin();
 })();
 </script>
 
