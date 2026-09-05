@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caliche — Integrated Internal Dashboard V2.0</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root{
+  --bg:#f8fafc; --surface:#fff; --text:#1e293b; --muted:#64748b;
+  --line:#e2e8f0; --primary:#2563eb; --primary-soft:#eff6ff;
+  --sidebar:256px; --shadow:0 2px 10px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar);background:#fff;border-right:1px solid #f1f5f9;box-shadow:0 4px 20px rgba(15,23,42,.05);display:flex;flex-direction:column;transition:.25s;width:256px;flex:none}
+.sidebar.collapsed{width:80px}
+.brand{height:76px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;padding:0 18px;gap:12px}
+.logo{height:42px;width:42px;border-radius:12px;background:#111827;color:#f59e0b;display:grid;place-items:center;font:700 23px Georgia}
+.brand-text{white-space:nowrap;overflow:hidden}.brand-text b{display:block;font-size:17px}.brand-text span{font-size:9px;letter-spacing:.14em;color:#94a3b8}
+.sidebar.collapsed .brand{justify-content:center;padding:0}.sidebar.collapsed .brand-text{display:none}
+.nav{padding:12px 10px;overflow:auto;flex:1}
+.nav-item,.nav-parent{width:100%;border:0;background:none;color:#475569;display:flex;align-items:center;gap:11px;padding:10px 11px;border-radius:8px;text-align:left;cursor:pointer;font-size:13px;margin:2px 0}
+.nav-item:hover,.nav-parent:hover{background:#f8fafc}.nav-item.active{background:#eff6ff;color:#1d4ed8;font-weight:600}
+.ico{width:20px;min-width:20px;text-align:center;font-size:16px}.nav-label{white-space:nowrap;overflow:hidden}
+.chev{margin-left:auto;font-size:11px}.subnav{padding-left:30px}.subnav .nav-item{font-size:12px;padding:8px 10px}
+.sidebar.collapsed .nav-label,.sidebar.collapsed .chev,.sidebar.collapsed .subnav{display:none}
+.footer{border-top:1px solid #f1f5f9;padding:12px}.user-mini{display:flex;align-items:center;gap:9px;padding:7px}
+.avatar{width:32px;height:32px;border-radius:50%;background:#dbeafe;color:#1d4ed8;display:grid;place-items:center;font-weight:700;font-size:12px}
+.user-mini .uinfo{font-size:11px;overflow:hidden}.uinfo b{display:block;white-space:nowrap}.uinfo span{color:#94a3b8}
+.sidebar.collapsed .uinfo{display:none}.sidebar.collapsed .user-mini{justify-content:center}
+
+.main{min-width:0;flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:68px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:14px;padding:0 22px;flex:none}
+.menu{border:0;background:#f8fafc;border-radius:8px;width:38px;height:38px;cursor:pointer;font-size:18px}
+.crumb{font-size:14px;font-weight:600;flex:1}.crumb span{color:#94a3b8;font-weight:400}
+.theme{display:flex;align-items:center;gap:8px;font-size:11px;color:#64748b}.theme select{border:1px solid #e2e8f0;border-radius:8px;padding:7px 9px;background:#fff;font-size:11px}
+.top-actions{display:flex;gap:7px}.top-actions button{border:1px solid #e2e8f0;background:#fff;border-radius:8px;width:34px;height:34px;cursor:pointer}
+.content{overflow:auto;padding:24px;flex:1}
+.page{max-width:1500px;margin:auto}
+.hero{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:20px;box-shadow:var(--shadow);display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.hero-left{display:flex;gap:14px;align-items:center}.hero .avatar{width:52px;height:52px;font-size:16px}
+.hero h1{margin:0 0 5px;font-size:20px}.hero p{margin:0;color:#64748b;font-size:13px}
+.hero-right{display:flex;gap:9px;flex-wrap:wrap}.btn{border:0;border-radius:8px;padding:9px 13px;cursor:pointer;font-size:12px;font-weight:600}.primary{background:#2563eb;color:#fff}.secondary{background:#fff;border:1px solid #dbe3ee;color:#334155}
+.section-title{margin:24px 0 12px;display:flex;justify-content:space-between;align-items:end}.section-title h2{margin:0;font-size:14px}.section-title span{font-size:11px;color:#94a3b8}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.card{background:#fff;border:1px solid #f1f5f9;border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+.kpi-label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;font-weight:700}.kpi-value{font-size:25px;font-weight:800;margin-top:8px}.kpi-note{font-size:10px;color:#94a3b8;margin-top:4px}
+.kpi.blue{border-top:3px solid #2563eb}.kpi.green{border-top:3px solid #10b981}.kpi.amber{border-top:3px solid #f59e0b}.kpi.purple{border-top:3px solid #8b5cf6}
+.two{display:grid;grid-template-columns:1.45fr 1fr;gap:14px}.quick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+.quick{border:1px solid #e8edf4;background:#fff;border-radius:10px;padding:13px;text-align:left;cursor:pointer}.quick:hover{border-color:#bfdbfe;background:#eff6ff}.quick b{display:block;font-size:12px}.quick span{font-size:10px;color:#94a3b8}
+.table{width:100%;border-collapse:collapse;font-size:11px}.table th{text-align:left;color:#94a3b8;font-size:9px;text-transform:uppercase;letter-spacing:.06em;padding:9px;border-bottom:1px solid #e2e8f0}.table td{padding:11px 9px;border-bottom:1px solid #f1f5f9}.badge{padding:4px 7px;border-radius:999px;font-size:9px;font-weight:700}.ok{background:#dcfce7;color:#15803d}.pending{background:#fef3c7;color:#a16207}
+.page-head{margin-bottom:18px}.page-head h1{margin:0;font-size:22px}.page-head p{margin:5px 0;color:#64748b;font-size:12px}
+.toast{position:fixed;right:20px;bottom:20px;background:#0f172a;color:white;padding:11px 15px;border-radius:9px;font-size:12px;box-shadow:0 10px 30px rgba(0,0,0,.2);display:none}
+.mobile-overlay{display:none}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.theme{display:none}}
+@media(max-width:720px){.sidebar{position:fixed;z-index:20;height:100%;transform:translateX(-100%)}.sidebar.mobile-open{transform:translateX(0)}.mobile-overlay.show{display:block;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:10}.content{padding:14px}.hero{flex-direction:column}.grid{grid-template-columns:1fr}.quick-grid{grid-template-columns:1fr}.topbar{padding:0 12px}}
+</style>
+</head>
+<body>
+<div class="mobile-overlay" id="overlay" onclick="closeMobile()"></div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><div class="logo">C</div><div class="brand-text"><b>Caliche</b><span>INTEGRATED INTERNAL DASHBOARD V2.0</span></div></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="footer"><div class="user-mini"><div class="avatar">AK</div><div class="uinfo"><b>Employee</b><span>Employee account</span></div></div></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu" onclick="toggleSidebar()" title="Collapse sidebar">☰</button>
+      <div class="crumb" id="crumb">Dashboard <span> / Employee overview</span></div>
+      <div class="theme">Theme <select id="theme" onchange="changeTheme()">
+        <option value="default">Default</option><option value="ocean">Ocean Light</option>
+        <option value="forest">Forest Light</option><option value="sunrise">Sunrise</option>
+        <option value="violet">Royal Violet</option><option value="slate">Executive Slate</option>
+        <option value="midnight">Midnight</option><option value="carbon">Carbon Dark</option>
+      </select></div>
+      <div class="top-actions"><button onclick="toast('Notifications opened')">🔔</button><button onclick="toast('Profile opened')">◉</button></div>
+    </header>
+    <main class="content"><div class="page" id="page"></div></main>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const nav=[
+ {label:'Dashboard',path:'/',icon:'▦'},
+ {label:'Workspace',path:'/my-workspace',icon:'▣'},
+ {label:'Strategy and Planning',path:'/strategies-planning',icon:'◇'},
+ {label:'Finance',path:'/finance',icon:'₹'},
+ {label:'CPM',path:'/crm',icon:'◈'},
+ {label:'PR Portal',path:'/pr-portal',icon:'◎'},
+ {label:'HR',group:true,icon:'♙',children:[
+  ['Attendance','/attendance','◷'],['Policy and Docs','/policies','▤'],['Travel Booking','/travel-booking','✈'],
+  ['Feedback / Events','/feedback','◌'],['Onboarding','/onboarding','→'],['Leaves','/leaves','▣'],
+  ['Medical Insurance','/medical-insurance','♡'],['Closure Formalities','/closure','□']
+ ]},
+ {label:'Requests',group:true,icon:'⇩',children:[
+  ['Salary','/salary','₹'],['Reimbursement','/reimbursement','↻'],['Office Expense','/office-expenses','▤'],
+  ['Letterhead Request','/letterhead-requests','▧'],['Assets','/assets','▥'],['Purchase Demand','/purchase-demands','⌂']
+ ]},
+ {label:'Wild Idea',path:'/ideas',icon:'✦'},
+ {label:'Achievements',path:'/achievements',icon:'★'},
+ {label:'My Profile',path:'/profile',icon:'◉'},
+ {label:'Notifications',path:'/notifications',icon:'🔔'}
+];
+let collapsed=false, openGroups={HR:true,Requests:true};
+
+function renderNav(){
+ const current=location.hash.replace('#','')||'/';
+ navEl=document.getElementById('nav'); navEl.innerHTML='';
+ nav.forEach(n=>{
+   if(n.group){
+     const b=document.createElement('button');b.className='nav-parent';b.innerHTML=`<span class="ico">${n.icon}</span><span class="nav-label">${n.label}</span><span class="chev">${openGroups[n.label]?'▾':'▸'}</span>`;
+     b.onclick=()=>{openGroups[n.label]=!openGroups[n.label];renderNav()};navEl.appendChild(b);
+     if(openGroups[n.label]){const s=document.createElement('div');s.className='subnav';n.children.forEach(([label,path,icon])=>addItem(s,label,path,icon,current));navEl.appendChild(s)}
+   }else addItem(navEl,n.label,n.path,n.icon,current);
+ });
+}
+function addItem(parent,label,path,icon,current){
+ const b=document.createElement('button');b.className='nav-item '+(current===path?'active':'');
+ b.innerHTML=`<span class="ico">${icon}</span><span class="nav-label">${label}</span>`;
+ b.onclick=()=>{location.hash=path;closeMobile();render()};
+ parent.appendChild(b);
+}
+function toggleSidebar(){if(innerWidth<=720){sidebar.classList.toggle('mobile-open');overlay.classList.toggle('show')}else{collapsed=!collapsed;sidebar.classList.toggle('collapsed',collapsed)}}
+function closeMobile(){sidebar.classList.remove('mobile-open');overlay.classList.remove('show')}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',1800)}
+function changeTheme(){
+ const v=document.getElementById('theme').value;
+ const themes={
+  default:['#f8fafc','#1e293b','#2563eb'],ocean:['#f0f9ff','#0f172a','#0284c7'],
+  forest:['#f0fdf4','#172018','#15803d'],sunrise:['#fffaf5','#29221c','#ea580c'],
+  violet:['#faf5ff','#24172f','#7c3aed'],slate:['#f1f5f9','#1e293b','#475569'],
+  midnight:['#eef2ff','#172554','#4338ca'],carbon:['#111827','#f8fafc','#f59e0b']
+ };
+ const [bg,text,primary]=themes[v]||themes.default;
+ document.documentElement.style.setProperty('--bg',bg);document.documentElement.style.setProperty('--text',text);document.documentElement.style.setProperty('--primary',primary);
+ if(v==='carbon'||v==='midnight'){document.documentElement.style.setProperty('--surface',v==='carbon'?'#1f2937':'#ffffff')}
+ localStorage.setItem('caliche-theme',v);
+}
+function dashboard(){
+ return `<div class="hero">
+   <div class="hero-left"><div class="avatar">AK</div><div><h1>Good afternoon, Employee 👋</h1><p>Employee | Operations | Caliche</p></div></div>
+   <div class="hero-right"><button class="btn primary" onclick="toast('Attendance clock-in action')">Clock In</button><button class="btn secondary" onclick="toast('Quick action opened')">Quick Actions</button></div>
+ </div>
+ <div class="section-title"><h2>My Overview</h2><span>Live employee dashboard</span></div>
+ <div class="grid">
+   <div class="card kpi blue"><div class="kpi-label">Attendance</div><div class="kpi-value">Present</div><div class="kpi-note">Today's status</div></div>
+   <div class="card kpi green"><div class="kpi-label">Leave Balance</div><div class="kpi-value">12</div><div class="kpi-note">Available days</div></div>
+   <div class="card kpi amber"><div class="kpi-label">Pending Requests</div><div class="kpi-value">3</div><div class="kpi-note">Awaiting action</div></div>
+   <div class="card kpi purple"><div class="kpi-label">Notifications</div><div class="kpi-value">5</div><div class="kpi-note">Unread updates</div></div>
+ </div>
+ <div class="two" style="margin-top:14px">
+   <section class="card"><div class="section-title" style="margin:0 0 12px"><h2>KPI Dashboard</h2><span>Admin assigned KPIs</span></div>
+    <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+      <div class="card" style="padding:12px"><b style="font-size:12px">Projects</b><div class="kpi-value" style="font-size:20px">08</div><small style="color:#94a3b8">Active</small></div>
+      <div class="card" style="padding:12px"><b style="font-size:12px">Tasks</b><div class="kpi-value" style="font-size:20px">24</div><small style="color:#94a3b8">This month</small></div>
+      <div class="card" style="padding:12px"><b style="font-size:12px">Completion</b><div class="kpi-value" style="font-size:20px">86%</div><small style="color:#94a3b8">Current KPI</small></div>
+    </div>
+   </section>
+   <section class="card"><div class="section-title" style="margin:0 0 12px"><h2>Quick Actions</h2><span>Requests</span></div>
+    <div class="quick-grid">
+      <button class="quick" onclick="go('/leaves')"><b>▣ Apply Leave</b><span>Leave request</span></button>
+      <button class="quick" onclick="go('/salary')"><b>₹ Salary</b><span>Salary slip</span></button>
+      <button class="quick" onclick="go('/reimbursement')"><b>↻ Reimbursement</b><span>Submit claim</span></button>
+      <button class="quick" onclick="go('/feedback')"><b>◌ Feedback</b><span>Send feedback</span></button>
+    </div>
+   </section>
+ </div>
+ <section class="card" style="margin-top:14px"><div class="section-title" style="margin:0 0 8px"><h2>Recent Activity</h2><span>Latest dashboard events</span></div>
+ <table class="table"><thead><tr><th>Activity</th><th>Date</th><th>Status</th></tr></thead><tbody>
+ <tr><td>Attendance marked</td><td>Today</td><td><span class="badge ok">Present</span></td></tr>
+ <tr><td>Leave balance synced</td><td>Today</td><td><span class="badge ok">Updated</span></td></tr>
+ <tr><td>Reimbursement request</td><td>Yesterday</td><td><span class="badge pending">Pending</span></td></tr>
+ </tbody></table></section>`;
+}
+const store={
+ get(k,d=[]){try{return JSON.parse(localStorage.getItem('caliche_'+k))??d}catch{return d}},
+ set(k,v){localStorage.setItem('caliche_'+k,JSON.stringify(v))}
+};
+
+function formPage(title, subtitle, fields, saveKey){
+ const rows=fields.map(f=>`<label style="display:block;margin-bottom:12px;font-size:11px;font-weight:700;color:#475569">${f.label}<input id="f_${f.key}" placeholder="${f.placeholder||''}" type="${f.type||'text'}" style="display:block;width:100%;margin-top:6px;padding:10px;border:1px solid #dbe3ee;border-radius:8px;outline:none"></label>`).join('');
+ return `<div class="page-head"><h1>${title}</h1><p>${subtitle}</p></div>
+ <section class="card" style="max-width:720px"><form onsubmit="saveForm(event,'${saveKey}','${title}')">${rows}
+ <div style="display:flex;gap:8px"><button class="btn primary" type="submit">Save Request</button><button class="btn secondary" type="button" onclick="render()">Cancel</button></div></form></section>
+ <section class="card" style="margin-top:14px"><h3 style="margin:0 0 10px;font-size:13px">Saved locally</h3><div id="saved_${saveKey}"></div></section>`;
+}
+function saveForm(e,key,title){
+ e.preventDefault();
+ const obj={time:new Date().toLocaleString(),...Object.fromEntries([...e.target.querySelectorAll('input')].map(x=>[x.id.slice(2),x.value]))};
+ const arr=store.get(key,[]);arr.unshift(obj);store.set(key,arr);toast(title+' saved successfully');render();
+}
+function savedList(key){
+ const a=store.get(key,[]);
+ return a.length?a.slice(0,8).map(x=>`<div style="padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:11px"><b>${x.time}</b> · ${Object.entries(x).filter(([k])=>k!=='time').map(([k,v])=>`${k}: ${v}`).join(' · ')}</div>`).join(''): '<span style="font-size:11px;color:#94a3b8">No requests yet.</span>';
+}
+function modulePage(path){
+ const pages={
+  '/attendance':()=>formPage('Attendance','Clock in, clock out and correction request.',[
+   {label:'Action',key:'action',placeholder:'Clock In / Clock Out / Correction'},
+   {label:'Remarks',key:'remarks',placeholder:'Optional remarks'}],'attendance'),
+  '/leaves':()=>formPage('Leave Requests','Submit and track your leave request.',[
+   {label:'Leave type',key:'type',placeholder:'Casual / Sick / Earned'},
+   {label:'From date',key:'from',type:'date'},{label:'To date',key:'to',type:'date'},
+   {label:'Reason',key:'reason',placeholder:'Reason for leave'}],'leaves'),
+  '/salary':()=>`<div class="page-head"><h1>Salary Status</h1><p>Salary slip request and downloads</p></div><section class="card"><div class="grid" style="grid-template-columns:repeat(3,1fr)"><div class="card"><b>Current Month</b><div class="kpi-value" style="font-size:20px">Available</div><button class="btn primary" onclick="toast('Salary slip prepared')">Download</button></div><div class="card"><b>Previous Month</b><div class="kpi-value" style="font-size:20px">Available</div><button class="btn secondary" onclick="toast('Salary slip prepared')">Download</button></div><div class="card"><b>Year</b><div class="kpi-value" style="font-size:20px">2026</div><p style="font-size:11px;color:#94a3b8">Payroll records</p></div></div></section>`,
+  '/reimbursement':()=>formPage('Reimbursement','Create an expense reimbursement request.',[
+   {label:'Expense type',key:'type',placeholder:'Travel / Food / Office / Other'},
+   {label:'Amount',key:'amount',type:'number',placeholder:'0.00'},
+   {label:'Date',key:'date',type:'date'},{label:'Purpose',key:'purpose',placeholder:'Business purpose'}],'reimbursement'),
+  '/feedback':()=>formPage('Feedback / Complaints','Submit feedback to admin.',[
+   {label:'Type',key:'type',placeholder:'Feedback / Complaint / Suggestion'},
+   {label:'Subject',key:'subject',placeholder:'Short subject'},
+   {label:'Message',key:'message',placeholder:'Write your message'}],'feedback'),
+  '/purchase-demands':()=>formPage('Purchase Demands','Raise and track purchase demands.',[
+   {label:'Item',key:'item',placeholder:'Required item'},
+   {label:'Quantity',key:'quantity',type:'number',placeholder:'1'},
+   {label:'Purpose',key:'purpose',placeholder:'Business purpose'}],'purchase'),
+  '/ideas':()=>formPage('Wild Idea','Submit a new idea for the organization.',[
+   {label:'Idea title',key:'title',placeholder:'Your idea'},
+   {label:'Description',key:'description',placeholder:'Explain the idea'}],'ideas'),
+  '/profile':()=>`<div class="page-head"><h1>My Profile</h1><p>Employee account details</p></div><section class="card" style="max-width:700px"><div class="hero-left"><div class="avatar">AK</div><div><h2 style="margin:0;font-size:17px">Employee</h2><p style="margin:4px 0;color:#64748b;font-size:12px">Operations · Caliche</p></div></div><hr style="border:0;border-top:1px solid #f1f5f9;margin:18px 0"><button class="btn primary" onclick="toast('Profile edit opened')">Edit Profile</button></section>`,
+  '/notifications':()=>`<div class="page-head"><h1>Notifications</h1><p>Unread updates and system notifications</p></div><section class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>5 unread notifications</b><button class="btn secondary" onclick="toast('All notifications marked read')">Mark all read</button></div><div style="margin-top:12px">${['Leave request status updated','New policy document available','Attendance reminder','KPI dashboard updated','Welcome announcement'].map((x,i)=>`<div style="padding:13px 0;border-bottom:1px solid #f1f5f9"><b style="font-size:12px">${x}</b><div style="font-size:10px;color:#94a3b8;margin-top:3px">${i+1} hour${i?'s':''} ago</div></div>`).join('')}</div></section>`,
+  '/my-workspace':()=>`<div class="page-head"><h1>Workspace</h1><p>Assigned recruitment interviews and workspace tasks</p></div><section class="card"><table class="table"><thead><tr><th>Candidate</th><th>Role</th><th>Status</th><th>Action</th></tr></thead><tbody>${[['Candidate A','Engineer','Pending'],['Candidate B','Analyst','Shortlisted'],['Candidate C','Manager','Pending']].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td><span class="badge ${r[2]==='Pending'?'pending':'ok'}">${r[2]}</span></td><td><button class="btn secondary" onclick="toast('Interview opened')">Open</button></td></tr>`).join('')}</tbody></table></section>`,
+  '/finance':()=>genericCard('Finance','Finance overview, requests and records.'),
+  '/strategies-planning':()=>genericCard('Strategy and Planning','Strategic plans, objectives and progress.'),
+  '/crm':()=>genericCard('CPM','Customer/project management workspace.'),
+  '/pr-portal':()=>genericCard('PR Portal','Public relations and communication workspace.'),
+  '/policies':()=>genericCard('Policy and Docs','Company policies and downloadable documents.'),
+  '/travel-booking':()=>formPage('Travel Booking','Create a travel booking request.',[{label:'Destination',key:'destination',placeholder:'City / Country'},{label:'Travel date',key:'date',type:'date'},{label:'Purpose',key:'purpose',placeholder:'Business purpose'}],'travel'),
+  '/onboarding':()=>genericCard('Onboarding','Onboarding tasks and joining information.'),
+  '/medical-insurance':()=>genericCard('Medical Insurance','Employee medical insurance information.'),
+  '/closure':()=>genericCard('Closure Formalities','Employee exit and clearance formalities.'),
+  '/office-expenses':()=>formPage('Office Expense','Submit an office expense.',[{label:'Expense',key:'expense',placeholder:'Expense name'},{label:'Amount',key:'amount',type:'number'},{label:'Purpose',key:'purpose',placeholder:'Purpose'}],'office'),
+  '/letterhead-requests':()=>formPage('Letterhead Request','Request an official letterhead.',[{label:'Document type',key:'type',placeholder:'Letter / Certificate / Other'},{label:'Purpose',key:'purpose',placeholder:'Purpose'}],'letterhead'),
+  '/assets':()=>genericCard('Assets','View assets assigned to your account.'),
+  '/achievements':()=>genericCard('Achievements','Company and employee achievements.'),
+ };
+ return pages[path]?pages[path]():genericCard(path.slice(1).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()),'Module ready.');
+}
+function genericCard(title,desc){
+ return `<div class="page-head"><h1>${title}</h1><p>${desc}</p></div><section class="card"><div class="grid"><div class="card"><b>Overview</b><div class="kpi-value" style="font-size:20px">Active</div></div><div class="card"><b>Records</b><div class="kpi-value" style="font-size:20px">0</div></div><div class="card"><b>Status</b><p><span class="badge ok">READY</span></p></div><div class="card"><b>Action</b><p><button class="btn primary" onclick="toast('Module action completed')">Open</button></p></div></div></section>`;
+}
+function generic(path){return modulePage(path)}
+function go(path){location.hash=path}
+function render(){
+ const path=location.hash.replace('#','')||'/';document.getElementById('page').innerHTML=path==='/'?dashboard():generic(path);
+ document.getElementById('crumb').innerHTML=(path==='/'?'Dashboard':path.slice(1).replaceAll('-',' ').replace(/\b\w/g,c=>c.toUpperCase()))+' <span> / Caliche employee portal</span>';
+ renderNav();
+ const keyMap={'/attendance':'attendance','/leaves':'leaves','/reimbursement':'reimbursement','/feedback':'feedback','/purchase-demands':'purchase','/ideas':'ideas','/travel-booking':'travel','/office-expenses':'office','/letterhead-requests':'letterhead'};
+ const key=keyMap[path], box=key&&document.getElementById('saved_'+key);
+ if(box) box.innerHTML=savedList(key);
+}
+const saved=localStorage.getItem('caliche-theme');if(saved){theme.value=saved;changeTheme()}
+window.addEventListener('hashchange',render);window.addEventListener('resize',()=>{if(innerWidth>720)closeMobile()});render();
+</script>
+</body>
+</html>
