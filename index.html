@@ -86,6 +86,68 @@ button,input,select{font:inherit}
 </div>
 <div class="toast" id="toast"></div>
 
+
+<style>
+#cameraModal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px}
+#cameraModal .cam-box{width:min(520px,96vw);background:#fff;border-radius:16px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+#cameraModal video{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;background:#111}
+.cam-actions{display:flex;gap:10px;margin-top:12px}
+.cam-actions button{flex:1;padding:11px;border:0;border-radius:9px;cursor:pointer;font-weight:600}
+#startCamera{background:#2563eb;color:white}
+#captureFace{background:#16a34a;color:white}
+#closeCamera{background:#e5e7eb;color:#111}
+.face-status{font-size:13px;color:#475569;margin:10px 0 0}
+.login-camera-btn{margin-top:10px;width:100%;padding:10px;border:1px solid #cbd5e1;background:#f8fafc;border-radius:8px;cursor:pointer;font-weight:600}
+</style>
+<div id="cameraModal">
+  <div class="cam-box">
+    <h3 style="margin:0 0 10px">Camera Verification</h3>
+    <video id="loginVideo" autoplay playsinline></video>
+    <p id="faceStatus" class="face-status">Click “Open Camera” and allow browser camera access.</p>
+        <div style="margin-top:10px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc">
+          <div style="font-weight:700;font-size:13px">Location permission</div>
+          <div id="locationStatus" style="font-size:12px;color:#64748b;margin-top:3px">Location not requested.</div>
+        </div>
+    <div class="cam-actions">
+      <button id="startCamera">Open Camera</button>
+      <button id="getLocation" style="background:#0f766e;color:white">Allow Location</button>
+      <button id="captureFace">Capture</button>
+      <button id="closeCamera">Close</button>
+    </div>
+    <canvas id="faceCanvas" style="display:none"></canvas>
+  </div>
+</div>
+
+
+<div id="clockInModal" style="position:fixed;inset:0;background:rgba(15,23,42,.72);display:none;align-items:center;justify-content:center;z-index:11000;padding:20px">
+  <div style="width:min(620px,96vw);background:#fff;border-radius:18px;padding:20px;box-shadow:0 25px 80px rgba(0,0,0,.35)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+      <div>
+        <h2 style="margin:0;font-size:20px;color:#1e293b">Attendance Clock-In</h2>
+        <p style="margin:4px 0 0;color:#64748b;font-size:13px">Photo + location verification</p>
+      </div>
+      <button id="clockClose" style="border:0;background:#f1f5f9;border-radius:9px;padding:8px 12px;cursor:pointer">✕</button>
+    </div>
+    <div style="margin-top:16px">
+      <video id="clockVideo" autoplay playsinline muted style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;background:#0f172a"></video>
+        <img id="clockPhotoPreview" alt="Captured attendance photo" style="display:none;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;background:#0f172a">
+    </div>
+    <div id="clockStatus" style="margin-top:12px;padding:11px 12px;border-radius:10px;background:#f8fafc;color:#475569;font-size:13px">
+      Camera and location permission are required for clock-in.
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+      <button id="clockCamera" style="padding:12px;border:0;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer">📷 Open Camera</button>
+      <button id="clockLocation" style="padding:12px;border:0;border-radius:10px;background:#0f766e;color:#fff;font-weight:700;cursor:pointer">📍 Allow Location</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <button id="clockRetake" style="display:none;padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer">↻ Retake Photo</button>
+      <button id="clockCapture" style="padding:12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;color:#0f172a;font-weight:700;cursor:pointer">Capture Photo</button>
+      <button id="clockConfirm" disabled style="padding:12px;border:0;border-radius:10px;background:#94a3b8;color:#fff;font-weight:700;cursor:not-allowed">Confirm Clock-In</button>
+    </div>
+    <canvas id="clockCanvas" style="display:none"></canvas>
+  </div>
+</div>
+
 <script>
 const nav=[
  {label:'Dashboard',path:'/',icon:'▦'},
@@ -146,7 +208,7 @@ function changeTheme(){
 function dashboard(){
  return `<div class="hero">
    <div class="hero-left"><div class="avatar">AK</div><div><h1>Good afternoon, Employee 👋</h1><p>Employee | Operations | Caliche</p></div></div>
-   <div class="hero-right"><button class="btn primary" onclick="toast('Attendance clock-in action')">Clock In</button><button class="btn secondary" onclick="toast('Quick action opened')">Quick Actions</button></div>
+   <div class="hero-right"><button class="btn primary" id="clockInBtn" onclick="startClockIn()">Clock In</button><button class="btn secondary" onclick="toast('Quick action opened')">Quick Actions</button></div>
  </div>
  <div class="section-title"><h2>My Overview</h2><span>Live employee dashboard</span></div>
  <div class="grid">
@@ -260,5 +322,268 @@ function render(){
 const saved=localStorage.getItem('caliche-theme');if(saved){theme.value=saved;changeTheme()}
 window.addEventListener('hashchange',render);window.addEventListener('resize',()=>{if(innerWidth>720)closeMobile()});render();
 </script>
+
+<script>
+(function(){
+  const modal=document.getElementById('cameraModal');
+  const video=document.getElementById('loginVideo');
+  const status=document.getElementById('faceStatus');
+  const start=document.getElementById('startCamera');
+  const capture=document.getElementById('captureFace');
+  const close=document.getElementById('closeCamera');
+  const open=document.getElementById('openLoginCamera');
+  const canvas=document.getElementById('faceCanvas');
+  let stream=null;
+
+  function stop(){
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream=null; }
+    if(video) video.srcObject=null;
+  }
+  function show(){ if(modal) modal.style.display='flex'; }
+  function hide(){ stop(); if(modal) modal.style.display='none'; }
+
+  open?.addEventListener('click', async ()=>{
+    show();
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+      video.srcObject=stream;
+      status.textContent='Camera is live. Position your face clearly and click Capture.';
+    }catch(e){
+      status.textContent='Camera permission denied/unavailable. Allow camera access in the browser and try again.';
+    }
+  });
+
+  start?.addEventListener('click', async ()=>{
+    try{
+      stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+      video.srcObject=stream;
+      status.textContent='Camera is live. Position your face clearly and click Capture.';
+    }catch(e){
+      status.textContent='Could not open camera. Browser permission or HTTPS/localhost may be required.';
+    }
+  });
+
+  capture?.addEventListener('click', ()=>{
+    if(!stream){ status.textContent='Open the camera first.'; return; }
+    canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    status.textContent='✓ Face image captured. Camera verification step completed.';
+    // This is only a camera capture in the standalone clone; it does not perform biometric identity matching.
+  });
+
+  close?.addEventListener('click',hide);
+  modal?.addEventListener('click',e=>{if(e.target===modal) hide();});
+})();
+</script>
+
+
+<script>
+(function(){
+  // Demo-only authentication for this standalone file.
+  // It does not impersonate or connect to a real company's account system.
+  const DEMO_USER='employee@caliche.local', DEMO_PASS='Caliche@123';
+  const form=document.querySelector('form');
+  const emailInputs=[...document.querySelectorAll('input')].filter(x=/(email|user|username)/i.test((x.name||'')+' '+(x.placeholder||'')));
+  const passInputs=[...document.querySelectorAll('input')].filter(x=>x.type==='password');
+  const email=emailInputs[0], pass=passInputs[0];
+
+  function toast(msg){
+    let t=document.getElementById('secureToast');
+    if(!t){t=document.createElement('div');t.id='secureToast';t.style.cssText='position:fixed;right:20px;bottom:20px;z-index:10000;background:#0f172a;color:white;padding:12px 16px;border-radius:10px;box-shadow:0 10px 30px #0003;font:600 13px Inter,Arial';document.body.appendChild(t);}
+    t.textContent=msg;t.style.display='block';clearTimeout(t._x);t._x=setTimeout(()=>t.style.display='none',3000);
+  }
+
+  // Geolocation
+  const loc=document.getElementById('getLocation'), locStatus=document.getElementById('locationStatus');
+  loc?.addEventListener('click',()=>{
+    if(!navigator.geolocation){locStatus.textContent='Geolocation is not supported by this browser.';return;}
+    locStatus.textContent='Requesting location permission…';
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        const lat=pos.coords.latitude.toFixed(6), lon=pos.coords.longitude.toFixed(6);
+        locStatus.textContent='✓ Location allowed. Coordinates captured for this session.';
+        sessionStorage.setItem('login_location',JSON.stringify({lat,lon,accuracy:pos.coords.accuracy,time:new Date().toISOString()}));
+        toast('Location permission granted');
+      },
+      err=>{locStatus.textContent='Location permission was not granted. You can allow it in the browser site settings.';},
+      {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+    );
+  });
+
+  // Make Capture save a session photo state.
+  document.getElementById('captureFace')?.addEventListener('click',()=>{
+    const v=document.getElementById('loginVideo'), c=document.getElementById('faceCanvas');
+    if(!v || !v.srcObject){return;}
+    c.width=v.videoWidth||640;c.height=v.videoHeight||480;
+    c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+    try{sessionStorage.setItem('login_photo_captured','1');}catch(e){}
+  });
+
+  // Demo login: intercept submit only when this is the login form.
+  form?.addEventListener('submit',(e)=>{
+    if(!email || !pass) return;
+    if(email.value.trim()===DEMO_USER && pass.value===DEMO_PASS){
+      e.preventDefault();
+      sessionStorage.setItem('caliche_demo_authenticated','1');
+      // If the existing app has a dashboard renderer, try to trigger it.
+      const submit=e.submitter;
+      toast('✓ Login successful — opening dashboard');
+      setTimeout(()=>{
+        const dash=document.querySelector('[data-route="/"], #dashboard, .dashboard');
+        if(location.hash!=='#dashboard') location.hash='#dashboard';
+        // Hide common login containers as a fallback.
+        document.querySelectorAll('body > div').forEach(el=>{
+          const txt=(el.innerText||'').slice(0,300);
+          if(/Integrated Internal Dashboard|Role Based Secure Access/i.test(txt)) el.style.display='none';
+        });
+      },250);
+    }else{
+      e.preventDefault();
+      toast('Invalid demo login. Use the credentials shown on the login screen.');
+    }
+  });
+})();
+</script>
+
+
+<script>
+(function(){
+  let clockStream=null, clockPhoto=false, clockLocation=false;
+  const modal=document.getElementById('clockInModal');
+  const video=document.getElementById('clockVideo');
+  const preview=document.getElementById('clockPhotoPreview');
+  const canvas=document.getElementById('clockCanvas');
+  const status=document.getElementById('clockStatus');
+  const openCam=document.getElementById('clockCamera');
+  const allowLoc=document.getElementById('clockLocation');
+  const capture=document.getElementById('clockCapture');
+  const retake=document.getElementById('clockRetake');
+  const confirm=document.getElementById('clockConfirm');
+  const close=document.getElementById('clockClose');
+
+  function stopClockCamera(){
+    if(clockStream){clockStream.getTracks().forEach(t=>t.stop());clockStream=null;}
+    if(video) video.srcObject=null;
+  }
+  function refreshConfirm(){
+    if(!confirm) return;
+    const ok=clockPhoto && clockLocation;
+    confirm.disabled=!ok;
+    confirm.style.background=ok?'#16a34a':'#94a3b8';
+    confirm.style.cursor=ok?'pointer':'not-allowed';
+    if(ok) status.textContent='✓ Photo + location verified. Click Confirm Clock-In.';
+    else if(clockPhoto && !clockLocation) status.textContent='✓ Photo captured. Waiting for location permission.';
+  }
+  window.startClockIn=function(){
+    modal.style.display='flex';
+    clockPhoto=false; clockLocation=false;
+    if(preview){preview.style.display='none';preview.src='';}
+    if(video) video.style.display='block';
+    if(capture) capture.style.display='block';
+    if(retake) retake.style.display='none';
+    status.textContent='Opening camera and requesting location…';
+    refreshConfirm();
+    openCamera();
+    requestLocation();
+  };
+  async function openCamera(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      status.textContent='Camera unavailable. Use HTTPS or localhost and allow camera access.';
+      return;
+    }
+    try{
+      clockStream=await navigator.mediaDevices.getUserMedia({
+        video:{facingMode:'user',width:{ideal:1280},height:{ideal:720}},audio:false
+      });
+      video.srcObject=clockStream;
+      status.textContent='✓ Camera is live. Look at the camera and click Capture Photo.';
+    }catch(e){
+      status.textContent='Camera permission denied/unavailable. Allow Camera from the browser address-bar permission icon.';
+    }
+  }
+  function requestLocation(){
+    if(!navigator.geolocation){
+      status.textContent='Location is not supported by this browser.';
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos=>{
+        clockLocation=true;
+        sessionStorage.setItem('clockin_location',JSON.stringify({
+          latitude:pos.coords.latitude,longitude:pos.coords.longitude,
+          accuracy:pos.coords.accuracy,timestamp:new Date().toISOString()
+        }));
+        status.textContent=clockPhoto?'✓ Photo + location verified. Click Confirm Clock-In.':'✓ Location allowed. Now capture your photo.';
+        refreshConfirm();
+      },
+      ()=>{
+        status.textContent='Location permission not granted. Allow Location in the browser and try again.';
+      },
+      {enableHighAccuracy:true,timeout:15000,maximumAge:0}
+    );
+  }
+  openCam?.addEventListener('click',openCamera);
+  allowLoc?.addEventListener('click',requestLocation);
+
+  capture?.addEventListener('click',()=>{
+    if(!clockStream){status.textContent='Open the camera first.';return;}
+    canvas.width=video.videoWidth||1280;
+    canvas.height=video.videoHeight||720;
+    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+    // Show the actual captured image and stop the live camera.
+    preview.src=canvas.toDataURL('image/jpeg',0.92);
+    preview.style.display='block';
+    video.style.display='none';
+    stopClockCamera();
+    clockPhoto=true;
+    sessionStorage.setItem('clockin_photo_captured','1');
+    if(capture) capture.style.display='none';
+    if(retake) retake.style.display='block';
+    refreshConfirm();
+  });
+
+  retake?.addEventListener('click',()=>{
+    clockPhoto=false;
+    preview.style.display='none';
+    preview.src='';
+    video.style.display='block';
+    capture.style.display='block';
+    retake.style.display='none';
+    status.textContent='Camera restarted. Look at the camera and capture again.';
+    openCamera();
+    refreshConfirm();
+  });
+
+  confirm?.addEventListener('click',()=>{
+    if(!clockPhoto || !clockLocation) return;
+    const now=new Date();
+    const time=now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    sessionStorage.setItem('clocked_in','1');
+    sessionStorage.setItem('clockin_time',now.toISOString());
+    sessionStorage.setItem('clockin_status','present');
+    modal.style.display='none';
+    const cards=[...document.querySelectorAll('.kpi')];
+    const attendance=cards.find(c=>/attendance/i.test(c.innerText||''));
+    if(attendance){
+      const val=attendance.querySelector('.kpi-value');
+      const note=attendance.querySelector('.kpi-note');
+      if(val) val.textContent='Clocked In';
+      if(note) note.textContent='Today at '+time;
+    }
+    const btn=document.getElementById('clockInBtn');
+    if(btn){btn.textContent='Clocked In ✓';btn.disabled=true;btn.style.background='#16a34a';btn.style.cursor='default';}
+    if(typeof toast==='function') toast('✓ Clock-in recorded at '+time);
+  });
+
+  close?.addEventListener('click',()=>{
+    stopClockCamera();
+    modal.style.display='none';
+  });
+  modal?.addEventListener('click',e=>{
+    if(e.target===modal){stopClockCamera();modal.style.display='none';}
+  });
+})();
+</script>
+
 </body>
 </html>
